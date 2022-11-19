@@ -7,6 +7,7 @@ declare_id!("7w9oX4fSFFW9YK7iWYqBUzEwXJHa3UY3wP4y8HvpaU2s");
 pub const MIN_ACCOUNT_LEN: usize = 9;
 const AUTH_PDA_SEED: &[u8] = b"auth_pda_seed";
 pub const VESTING_START_TIMESTAMP: u64 = 1685548800;
+pub const VESTING_CONTRACT_LEN: usize = 100;
 
 #[program]
 pub mod gdvesting {
@@ -77,10 +78,10 @@ pub struct Initialize<'info> {
     #[account(
     init,
     payer = signer,
-    space = 666, // TODO make this precise
+    space = VESTING_CONTRACT_LEN,
     )]
     pub vesting_contract: Account<'info, VestingContract>,
-    pub gigs_mint: Account<'info, Mint>, // TODO add constraint for this
+    pub gigs_mint: Account<'info, Mint>,
     #[account(
     init,
     token::mint = gigs_mint,
@@ -104,9 +105,13 @@ pub struct Claim<'info> {
     bump,
     )]
     pub auth_pda: Account<'info, AuthAccount>,
-    #[account(mut)]
+    #[account(
+    mut,
+    constraint = vesting_contract.investor == signer.key(),
+    constraint = vesting_contract.vault == gigs_vault.key(),
+    )]
     pub vesting_contract: Account<'info, VestingContract>,
-    pub gigs_mint: Account<'info, Mint>, // TODO add constraint for this
+    pub gigs_mint: Account<'info, Mint>,
     #[account(mut)]
     pub gigs_vault: Account<'info, TokenAccount>,
     pub receiver_gigs_ata: Account<'info, TokenAccount>,
