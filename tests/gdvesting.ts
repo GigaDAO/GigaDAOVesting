@@ -1,10 +1,15 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Gdvesting } from "../target/types/gdvesting";
-import { TOKEN_PROGRAM_ID, createMint} from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, createMint, createAccount, mintTo, NATIVE_MINT} from "@solana/spl-token";
 
 //consts
 const AUTH_PDA_SEED = "auth_pda_seed";
+let gigsMint;
+let owner1;
+let authPda;
+let gigsVault;
+let vestingContract;
 
 // utils
 function to_lamports(num_sol) {
@@ -17,20 +22,21 @@ describe("gdvesting", () => {
 
     const program = anchor.workspace.Gdvesting as Program<Gdvesting>;
 
-    it("Is initialized!", async () => {
+    it("Initialize Contract", async () => {
 
-        const owner1 = anchor.web3.Keypair.generate();
+        owner1 = anchor.web3.Keypair.generate();
         await program.provider.connection.confirmTransaction(
             await program.provider.connection.requestAirdrop(owner1.publicKey, to_lamports(10)),
             "confirmed"
         );
 
-        let [authPda, _] = await anchor.web3.PublicKey.findProgramAddress(
+        let [_authPda, _] = await anchor.web3.PublicKey.findProgramAddress(
             [Buffer.from(anchor.utils.bytes.utf8.encode(AUTH_PDA_SEED))],
             program.programId
         );
+        authPda = _authPda;
 
-        let gigsMint = await createMint(
+        gigsMint = await createMint(
             program.provider.connection,
             owner1,
             owner1.publicKey,
@@ -38,8 +44,9 @@ describe("gdvesting", () => {
             4,
         );
 
-        let vestingContract = anchor.web3.Keypair.generate();
-        let gigsVault = anchor.web3.Keypair.generate();
+
+        vestingContract = anchor.web3.Keypair.generate();
+        gigsVault = anchor.web3.Keypair.generate();
 
         let investor = program.provider.publicKey;
         let vesting_rate = new anchor.BN(1);
@@ -59,6 +66,43 @@ describe("gdvesting", () => {
                 rent: anchor.web3.SYSVAR_RENT_PUBKEY,
             })
             .signers([vestingContract, gigsVault])
+            .rpc();
+
+        console.log("Your transaction signature", tx);
+
+    });
+
+    it("Claim Tokens", async () => {
+
+        let receiverGigsAta = await createAccount(
+            program.provider.connection,
+            owner1,
+            gigsMint,
+            program.provider.publicKey,
+        );
+
+        await mintTo(
+            program.provider.connection,
+            owner1,
+            gigsMint,
+            gigsVault.publicKey,
+            owner1,
+            1000
+        );
+
+        // @ts-ignore
+        const tx = await program.methods.claim()
+            .accounts({
+                signer: program.provider.publicKey,
+                authPda: authPda,
+                vestingContract: vestingContract.publicKey,
+                gigsMint: gigsMint,
+                gigsVault: gigsVault.publicKey,
+                receiverGigsAta: receiverGigsAta,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                systemProgram: anchor.web3.SystemProgram.programId,
+                rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            })
             .rpc();
 
         console.log("Your transaction signature", tx);

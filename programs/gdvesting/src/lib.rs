@@ -31,7 +31,6 @@ pub mod gdvesting {
     }
      pub fn claim(
          ctx: Context<Claim>,
-         amount: u64,
      ) -> Result<()> {
 
          let contract = &mut ctx.accounts.vesting_contract;
@@ -47,19 +46,30 @@ pub mod gdvesting {
          let total_amount_vested = total_seconds_vested * contract.vesting_rate;
          let claimable_amount = total_amount_vested - contract.claimed_amount;
 
-         if amount > claimable_amount {
-             return err!(ErrorCode::AmountMoreThanClaimable);
-         }
+         msg!("claimable_amount: {:?}", claimable_amount);
+         msg!("vault balance: {:?}", ctx.accounts.gigs_vault.amount);
 
-         // transfer earned tokens
-         let signer_handle = &ctx.accounts.signer;
-         let tx_handle = ctx.accounts.receiver_gigs_ata.to_account_info();
-         let rx_handle = ctx.accounts.gigs_vault.to_account_info();
-         let token_program_acct_info = ctx.accounts.token_program.to_account_info();
-         transfer_tokens(signer_handle, tx_handle, rx_handle, token_program_acct_info, amount)?;
+        let (auth_pda, bump_seed) = Pubkey::find_program_address(&[AUTH_PDA_SEED], ctx.program_id);
+        let seeds = &[&AUTH_PDA_SEED[..], &[bump_seed]];
+        let signer = &[&seeds[..]];
+
+        // check pda addy correct
+        if auth_pda != ctx.accounts.auth_pda.key() {
+            return Err(ErrorCode::InvalidAuthPda.into());
+        }
+
+        // transfer wsol
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.gigs_vault.to_account_info(),
+            to: ctx.accounts.receiver_gigs_ata.to_account_info(),
+            authority: ctx.accounts.auth_pda.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+        token::transfer(cpi_ctx, claimable_amount)?;
 
          // update claimed amount
-         contract.claimed_amount += amount;
+         contract.claimed_amount += claimable_amount;
 
          Ok(())
     }
@@ -147,24 +157,6 @@ pub struct VestingContract {
 #[account]
 #[derive(Default)]
 pub struct AuthAccount {}
-
-// utils
-pub fn transfer_tokens<'a>(
-    signer: &Signer<'a>,
-    tx_acct_info: AccountInfo<'a>,
-    rx_acct_info: AccountInfo<'a>,
-    token_program_info: AccountInfo<'a>,
-    amount: u64
-) -> Result<()> {
-    let cpi_accounts = Transfer {
-        from: tx_acct_info,
-        to: rx_acct_info,
-        authority: signer.to_account_info(),
-    };
-    let cpi_ctx = CpiContext::new(token_program_info, cpi_accounts);
-    token::transfer(cpi_ctx, amount)?;
-    Ok(())
-}
 
 // custom errors
 #[error_code]
