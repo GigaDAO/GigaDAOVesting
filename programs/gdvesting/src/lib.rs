@@ -25,29 +25,39 @@ pub mod gdvesting {
         ctx.accounts.vesting_contract.claimed_amount = 0;
         Ok(())
     }
-     pub fn claim(ctx: Context<Claim>) -> Result<()> {
+     pub fn claim(
+         ctx: Context<Claim>,
+         amount: u64,
+     ) -> Result<()> {
 
+         let contract = &mut ctx.accounts.vesting_contract;
 
-         /////////////////////////////////////////////
-         // TODO check start date
-         // TODO calculate amount vested
-
-         let mut contract = &mut ctx.accounts.vesting_contract;
+         // check start date
          let current_timestamp = Clock::get().unwrap().unix_timestamp as u64;
-         let claimable_amount = 0;
+         if current_timestamp < VESTING_START_TIMESTAMP {
+             return err!(ErrorCode::VestingStartDateNotReached);
+         }
 
-         // TODO
-         /////////////////////////////////////////////
+         // calculate amount vested
+         let total_seconds_vested = current_timestamp - VESTING_START_TIMESTAMP;
+         let total_amount_vested = total_seconds_vested * contract.vesting_rate;
+         let claimable_amount = total_amount_vested - contract.claimed_amount;
 
+         if amount > claimable_amount {
+             return err!(ErrorCode::AmountMoreThanClaimable);
+         }
 
          // transfer earned tokens
-        let signer_handle = &ctx.accounts.signer;
-        let tx_handle = ctx.accounts.receiver_gigs_ata.to_account_info();
-        let rx_handle = ctx.accounts.gigs_vault.to_account_info();
-        let token_program_acct_info = ctx.accounts.token_program.to_account_info();
-        transfer_tokens(signer_handle, tx_handle, rx_handle, token_program_acct_info, claimable_amount)?;
+         let signer_handle = &ctx.accounts.signer;
+         let tx_handle = ctx.accounts.receiver_gigs_ata.to_account_info();
+         let rx_handle = ctx.accounts.gigs_vault.to_account_info();
+         let token_program_acct_info = ctx.accounts.token_program.to_account_info();
+         transfer_tokens(signer_handle, tx_handle, rx_handle, token_program_acct_info, amount)?;
 
-        Ok(())
+         // update claimed amount
+         contract.claimed_amount += amount;
+
+         Ok(())
     }
 
 }
@@ -146,6 +156,8 @@ pub enum ErrorCode {
     InvalidAuthPda,
     #[msg("Vesting Start Date Not Reached.")]
     VestingStartDateNotReached,
+    #[msg("Amount More Than Claimable.")]
+    AmountMoreThanClaimable,
 }
 
 
