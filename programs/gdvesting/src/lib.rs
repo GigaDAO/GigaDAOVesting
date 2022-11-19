@@ -6,8 +6,8 @@ declare_id!("7w9oX4fSFFW9YK7iWYqBUzEwXJHa3UY3wP4y8HvpaU2s");
 // consts
 pub const MIN_ACCOUNT_LEN: usize = 9;
 const AUTH_PDA_SEED: &[u8] = b"auth_pda_seed";
-pub const VESTING_START_TIMESTAMP: u64 = 1685548800;
-pub const VESTING_CONTRACT_LEN: usize = 100;
+pub const VESTING_CONTRACT_LEN: usize = 500;
+// pub const VESTING_START_TIMESTAMP: u64 = 1685548800; // June 1, 2023
 
 #[program]
 pub mod gdvesting {
@@ -18,11 +18,13 @@ pub mod gdvesting {
         investor: Pubkey,
         vesting_rate: u64,
         total_allocated_amount: u64,
+        vesting_start_timestamp: u64,
     ) -> Result<()> {
         ctx.accounts.vesting_contract.investor = investor;
         ctx.accounts.vesting_contract.vault = ctx.accounts.gigs_vault.key();
         ctx.accounts.vesting_contract.mint = ctx.accounts.gigs_mint.key();
         ctx.accounts.vesting_contract.vesting_rate = vesting_rate;
+        ctx.accounts.vesting_contract.vesting_start_timestamp = vesting_start_timestamp;
         ctx.accounts.vesting_contract.total_allocated_amount = total_allocated_amount;
         ctx.accounts.vesting_contract.claimed_amount = 0;
         Ok(())
@@ -36,12 +38,12 @@ pub mod gdvesting {
 
          // check start date
          let current_timestamp = Clock::get().unwrap().unix_timestamp as u64;
-         if current_timestamp < VESTING_START_TIMESTAMP {
+         if current_timestamp < contract.vesting_start_timestamp {
              return err!(ErrorCode::VestingStartDateNotReached);
          }
 
          // calculate amount vested
-         let total_seconds_vested = current_timestamp - VESTING_START_TIMESTAMP;
+         let total_seconds_vested = current_timestamp - contract.vesting_start_timestamp;
          let total_amount_vested = total_seconds_vested * contract.vesting_rate;
          let claimable_amount = total_amount_vested - contract.claimed_amount;
 
@@ -136,6 +138,7 @@ pub struct VestingContract {
     pub investor: Pubkey,
     pub vault: Pubkey,
     pub mint: Pubkey,
+    pub vesting_start_timestamp: u64, // unix
     pub vesting_rate: u64, // gigs / second
     pub claimed_amount: u64,
     pub total_allocated_amount: u64,

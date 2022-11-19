@@ -8,8 +8,8 @@ gdvesting = "7w9oX4fSFFW9YK7iWYqBUzEwXJHa3UY3wP4y8HvpaU2s"
 url = "https://api.apr.dev"
 
 [provider]
-#cluster = "localnet"
-cluster = "devnet"
+cluster = "localnet"
+#cluster = "devnet"
 wallet = "/home/alphaprime8/.config/solana/id.json"
 
 [scripts]
