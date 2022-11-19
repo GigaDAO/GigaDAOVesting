@@ -29,25 +29,22 @@ pub mod gdvesting {
         ctx.accounts.vesting_contract.claimed_amount = 0;
         Ok(())
     }
-     pub fn claim(
-         ctx: Context<Claim>,
-     ) -> Result<()> {
+    pub fn claim(
+        ctx: Context<Claim>,
+    ) -> Result<()> {
 
-         let contract = &mut ctx.accounts.vesting_contract;
+        let contract = &mut ctx.accounts.vesting_contract;
 
-         // check start date
-         let current_timestamp = Clock::get().unwrap().unix_timestamp as u64;
-         if current_timestamp < contract.vesting_start_timestamp {
-             return err!(ErrorCode::VestingStartDateNotReached);
-         }
+        // check start date
+        let current_timestamp = Clock::get().unwrap().unix_timestamp as u64;
+        if current_timestamp < contract.vesting_start_timestamp {
+            return err!(ErrorCode::VestingStartDateNotReached);
+        }
 
-         // calculate amount vested
-         let total_seconds_vested = current_timestamp - contract.vesting_start_timestamp;
-         let total_amount_vested = total_seconds_vested * contract.vesting_rate;
-         let claimable_amount = total_amount_vested - contract.claimed_amount;
-
-         msg!("claimable_amount: {:?}", claimable_amount);
-         msg!("vault balance: {:?}", ctx.accounts.gigs_vault.amount);
+        // calculate amount vested
+        let total_seconds_vested = current_timestamp - contract.vesting_start_timestamp;
+        let total_amount_vested = total_seconds_vested * contract.vesting_rate;
+        let claimable_amount = total_amount_vested - contract.claimed_amount;
 
         let (auth_pda, bump_seed) = Pubkey::find_program_address(&[AUTH_PDA_SEED], ctx.program_id);
         let seeds = &[&AUTH_PDA_SEED[..], &[bump_seed]];
@@ -68,10 +65,10 @@ pub mod gdvesting {
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::transfer(cpi_ctx, claimable_amount)?;
 
-         // update claimed amount
-         contract.claimed_amount += claimable_amount;
+        // update claimed amount
+        contract.claimed_amount += claimable_amount;
 
-         Ok(())
+        Ok(())
     }
 
 }

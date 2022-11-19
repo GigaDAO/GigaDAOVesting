@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Gdvesting } from "../target/types/gdvesting";
-import { TOKEN_PROGRAM_ID, createMint, createAccount, mintTo, NATIVE_MINT} from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, createMint, createAccount, mintTo, getAccount} from "@solana/spl-token";
 
 //consts
 const AUTH_PDA_SEED = "auth_pda_seed";
@@ -106,6 +106,10 @@ describe("gdvesting", () => {
             .rpc();
 
         console.log("Your transaction signature", tx);
+
+        let receiverAccountInfo = await getAccount(program.provider.connection, receiverGigsAta);
+        let rxBalance = receiverAccountInfo.amount;
+        console.log("Rx amount: ", rxBalance);
 
     });
 });
