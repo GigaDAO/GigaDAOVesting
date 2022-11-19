@@ -21,6 +21,7 @@ pub mod gdvesting {
     ) -> Result<()> {
         ctx.accounts.vesting_contract.investor = investor;
         ctx.accounts.vesting_contract.vault = ctx.accounts.gigs_vault.key();
+        ctx.accounts.vesting_contract.mint = ctx.accounts.gigs_mint.key();
         ctx.accounts.vesting_contract.vesting_rate = vesting_rate;
         ctx.accounts.vesting_contract.total_allocated_amount = total_allocated_amount;
         ctx.accounts.vesting_contract.claimed_amount = 0;
@@ -109,11 +110,20 @@ pub struct Claim<'info> {
     mut,
     constraint = vesting_contract.investor == signer.key(),
     constraint = vesting_contract.vault == gigs_vault.key(),
+    constraint = vesting_contract.mint == gigs_mint.key(),
     )]
     pub vesting_contract: Account<'info, VestingContract>,
     pub gigs_mint: Account<'info, Mint>,
-    #[account(mut)]
+    #[account(
+    mut,
+    token::mint = gigs_mint,
+    )]
     pub gigs_vault: Account<'info, TokenAccount>,
+    #[account(
+    mut,
+    token::mint = gigs_mint,
+    constraint = receiver_gigs_ata.owner.key() == signer.key(),
+    )]
     pub receiver_gigs_ata: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -125,6 +135,7 @@ pub struct Claim<'info> {
 pub struct VestingContract {
     pub investor: Pubkey,
     pub vault: Pubkey,
+    pub mint: Pubkey,
     pub vesting_rate: u64, // gigs / second
     pub claimed_amount: u64,
     pub total_allocated_amount: u64,
