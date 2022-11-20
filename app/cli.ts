@@ -3,9 +3,9 @@ import * as anchor from "@project-serum/anchor";
 // env consts
 const IS_DEVNET = true;
 const LOCAL_KEYPAIR_FPATH = "/home/alphaprime8/.config/solana/id.json";
-const PROGRAM_ID = '7w9oX4fSFFW9YK7iWYqBUzEwXJHa3UY3wP4y8HvpaU2s'; // can also load from file as done with localKeypair below
+const PROGRAM_ID = 'EscGYnb1KwxssEXCaGv93iruEN79usLJxmcf45K35yeS'; // can also load from file as done with localKeypair below
 
-const BUFFER_ADDRESS = "3rkWkQ1dzhVgdUSWqscBQqzBpB6nnzppbnnFaHPVuNwG";
+// const BUFFER_ADDRESS = "3rkWkQ1dzhVgdUSWqscBQqzBpB6nnzppbnnFaHPVuNwG";
 
 // program consts
 async function initProgram() {
@@ -23,8 +23,7 @@ async function initProgram() {
 
 async function initialize() {
     const program = await initProgram();
-
-    const tx = await program.methods.initialize().rpc();
+    const tx = await program.methods.logVersion().rpc();
     console.log("Your transaction signature", tx);
 }
 
