@@ -1,17 +1,23 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("7w9oX4fSFFW9YK7iWYqBUzEwXJHa3UY3wP4y8HvpaU2s");
+declare_id!("EscGYnb1KwxssEXCaGv93iruEN79usLJxmcf45K35yeS");
 
 // consts
 pub const MIN_ACCOUNT_LEN: usize = 9;
 const AUTH_PDA_SEED: &[u8] = b"auth_pda_seed";
 pub const VESTING_CONTRACT_LEN: usize = 500;
+pub const VERSION_NUMBER: u64 = 1;
 // pub const VESTING_START_TIMESTAMP: u64 = 1685548800; // June 1, 2023
 
 #[program]
 pub mod gdvesting {
     use super::*;
+
+    pub fn log_version(_ctx: Context<LogVersion>) -> Result<()>{
+        msg!("Version: {:?}", VERSION_NUMBER);
+        Ok(())
+    }
 
     pub fn initialize(
         ctx: Context<Initialize>,
@@ -72,6 +78,9 @@ pub mod gdvesting {
     }
 
 }
+
+#[derive(Accounts)]
+pub struct LogVersion {}
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
