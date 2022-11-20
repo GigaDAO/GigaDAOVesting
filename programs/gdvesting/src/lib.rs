@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("EscGYnb1KwxssEXCaGv93iruEN79usLJxmcf45K35yeS");
+declare_id!("CA2CNT3eyyie4dKVos5ZoaePSAB2jCZaZRi7Zbdx1RNh");
 
 // consts
 pub const MIN_ACCOUNT_LEN: usize = 9;

@@ -1,9 +1,13 @@
 import * as anchor from "@project-serum/anchor";
 
 // env consts
-const IS_DEVNET = true;
+const IS_DEVNET = false;
 const LOCAL_KEYPAIR_FPATH = "/home/alphaprime8/.config/solana/id.json";
-const PROGRAM_ID = 'EscGYnb1KwxssEXCaGv93iruEN79usLJxmcf45K35yeS'; // can also load from file as done with localKeypair below
+const PROGRAM_ID = 'CA2CNT3eyyie4dKVos5ZoaePSAB2jCZaZRi7Zbdx1RNh'; // can also load from file as done with localKeypair below
+
+/*
+
+ */
 
 // const BUFFER_ADDRESS = "3rkWkQ1dzhVgdUSWqscBQqzBpB6nnzppbnnFaHPVuNwG";
 
